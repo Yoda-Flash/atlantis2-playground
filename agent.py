@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from gymnasium.core import ObsType
+from gymnasium.spaces import Box
 from matplotlib.patches import Patch
 from tqdm import tqdm
 
@@ -34,7 +35,8 @@ class Agent:
             final_epsilon: The final epsilon value
             discount_factor: The discount factor for computing the Q-value
         """
-        self.q_values = defaultdict(lambda: np.zeros(env.__getattribute__("action_space")))
+        print(env.observation_space.shape[2])
+        self.q_values = np.zeros((env.observation_space.shape[0], env.action_space.n))
 
         self.lr = learning_rate
         self.discount_factor = discount_factor
@@ -45,7 +47,9 @@ class Agent:
 
         self.training_error = []
 
-    def get_action(self, obs: tuple[int, int, bool]) -> int:
+        self.total_rewards_episode = list()
+
+    def get_action(self, obs: Box[0, 255, (210, 160, 3), np.uint8]) -> int:
         """
         Returns the best action with probability (1 - epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
@@ -60,37 +64,24 @@ class Agent:
 
     def update(
         self,
-        obs: tuple[int, int, int],
+        obs: Box[0, 255, (210, 160, 3), np.uint8],
         action: int,
         reward: float,
         terminated: bool,
-        next_obs: tuple[int, int, int],
+        next_obs: Box[0, 255, (210, 160, 3), np.uint8],
     ):
-        print(type(next_obs[0]))
-        print(self.q_values)
         """Updates the Q-value of an action."""
-        future_q_value = (not terminated) * np.max(self.q_values[next_obs])
-        temporal_difference = (
-            reward + self.discount_factor * future_q_value - self.q_values[obs][action]
-        )
-
-        self.q_values[obs][action] = (
-            self.q_values[obs][action] + self.lr * temporal_difference
-        )
-        self.training_error.append(temporal_difference)
+        self.q_values[obs, action] = (1 - self.lr) * self.q_values[obs, action] + self.lr * (reward + self.discount_factor*max(self.q_values[next_obs, :]))
+        self.total_rewards_episode.append(reward)
+        # future_q_value = (not terminated) * np.max(self.q_values[next_obs])
+        # temporal_difference = (
+        #     reward + self.discount_factor * future_q_value - self.q_values[obs][action]
+        # )
+        #
+        # self.q_values[obs][action] = (
+        #     self.q_values[obs][action] + self.lr * temporal_difference
+        # )
+        # self.training_error.append(temporal_difference)
 
     def decay_epsilon(self):
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
-
-learning_rate = 0.01
-n_episodes = 100000
-start_epsilon = 1.0
-epsilon_decay = start_epsilon / (n_episodes / 2)  # reduce the exploration over time
-final_epsilon = 0.1
-
-agent = Agent(
-    learning_rate=learning_rate,
-    initial_epsilon=start_epsilon,
-    epsilon_decay=epsilon_decay,
-    final_epsilon=final_epsilon,
-)

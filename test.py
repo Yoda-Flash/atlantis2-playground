@@ -12,7 +12,7 @@ import gymnasium as gym
 import ale_py
 
 gym.register_envs(ale_py)
-env = gym.make("ALE/Atlantis2-v5", render_mode='human')
+env = gym.make("Blackjack-v1", render_mode='human')
 
 class Agent:
     def __init__(
@@ -66,8 +66,6 @@ class Agent:
         next_obs: tuple[int, int, bool],
     ):
         """Updates the Q-value of an action."""
-        print(self.q_values)
-        print(next_obs)
         future_q_value = (not terminated) * np.max(self.q_values[next_obs])
         temporal_difference = (
             reward + self.discount_factor * future_q_value - self.q_values[obs][action]
