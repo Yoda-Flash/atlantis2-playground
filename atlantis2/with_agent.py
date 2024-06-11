@@ -1,6 +1,6 @@
 import gymnasium as gym
 import ale_py
-from agent import Agent
+from agent import Atlantis2Agent
 
 gym.register_envs(ale_py)
 env = gym.make("ALE/Atlantis2-v5", render_mode='human')
@@ -13,7 +13,7 @@ start_epsilon = 1.0
 epsilon_decay = start_epsilon / (n_episodes / 2)  # reduce the exploration over time
 final_epsilon = 0.1
 
-agent = Agent(
+agent = Atlantis2Agent(
     learning_rate=learning_rate,
     initial_epsilon=start_epsilon,
     epsilon_decay=epsilon_decay,
